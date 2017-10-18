@@ -11,11 +11,30 @@ const workTag = 11;
 const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const monthName = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-// Hardcoding these for now.
-// TODO:Get from current date or CLI arguments
-const currentMonth = 9
-const currentYear = 2017
+// Get current month or year (or offset from command line)
+let d = new Date();
+let currentMonth = d.getMonth() + 1;
+let currentYear = d.getFullYear();
 let currentMonthName = monthName[currentMonth - 1];
+if (!(process.argv[2] === undefined)) {
+	let offset = process.argv[2];
+	if (isNaN(offset)) {
+		console.error("Invalid offset.  Must be an integer between 1-12.");
+		process.exit();
+	}
+	offset = Math.abs(offset);
+	if (offset > 12) {
+		console.error("Invalid offset.  Must be less than 13 months");
+		process.exit();
+	}
+	currentMonth = currentMonth - offset;
+	if (currentMonth < 1) {
+		currentMonth = currentMonth + 12;
+		currentYear--;
+	}
+}
+console.log("Month: ", currentMonth);
+console.log("Year: ", currentYear);
 
 // Connect to database
 let db = new sqlite3.Database(databaseLocation, (err) => {
@@ -34,6 +53,7 @@ let db2 = new sqlite3.Database(databaseLocation, (err) => {
 
 // Get entries for current month
 let entries = {};
+let entryKeys = [];
 let uniqueTags = {};
 
 let sql = `
@@ -57,39 +77,56 @@ let sql = `
 			select
 				z_6entries AS z_pk
 			from
-				Z_6TAGS
+				z_6tags
 			where
 				z_30tags1 = ?
 		)
+	and
+		e.z_pk = te.z_6entries
+	and
+		te.z_30tags1 = tn.z_pk
 	order by
 		zcreationdate, tag
 `;
-console.log(sql);
 db.each(sql, [currentYear, currentMonth, workTag], (err, row) => {
 	if (err) {
 		console.error(err.message);
 		process.exit();
 	}
 	let pk = row.pk;
-	entries.pk.text = row.text.replace("<code type=", "<code class=");
-	entries.pk.text = entries.pk.text.replace(/\`([^\`]+)?\`/g, "<code class='solo'>$1</code>");
+	if (entryKeys.indexOf(pk) === -1) {
+		entryKeys.push(pk);
+	}
+	if (entries[pk] == undefined) {
+		entries[pk] = {};
+	}
+	entries[pk].text = row.text;
+	entries[pk].text = entries[pk].text.replace(/\`</g, "`&lt;");
+	entries[pk].text = entries[pk].text.replace(/>\`/g, "&gt;`");
+	entries[pk].text = entries[pk].text.replace("<code type=", "<code class=");
+	entries[pk].text = entries[pk].text.replace(/\`([^\`]+)?\`/g, "<code class='solo'>$1</code>");
 	let dayOfMonth = row.day_of_month.toString();
-	entries.pk.timeStamp = dayName[row.day_of_week] + ", " + currentMonthName + " " + dayOfMonth.replace(/^0/, "") + " " + row.local_time;
-	entries.pk.tags[tag] = tag;
+	entries[pk].timeStamp = dayName[row.day_of_week] + ", " + currentMonthName + " " + dayOfMonth.replace(/^0/, "") + " " + row.local_time;
+	if (entries[pk].tags === undefined) {
+		entries[pk].tags = [];
+	}
+	if (entries[pk].tags.indexOf(row.tag) === -1) {
+		if (!(row.tag === "Work")) {
+			entries[pk].tags.push(row.tag);
+		}
+	}
+	uniqueTags[row.tag] = row.tag;
 	}, (err, rowsRetrieved) => {
 		if (err) {
 			console.error(err.message);
 			process.exit();
 		}
-		console.log("Entries retrieved", rowsRetrieved);
+		console.log("Total rows retrieved", rowsRetrieved);
+		//console.log(entries);
+		printHTMLHeader();
+		printEntries();
 	}
 );
-
-//db.close((err) => {
-//	console.log("db closed");
-//	printHTMLHeader();
-//	printEntries();
-//});
 
 /**
  * Print HTML header
@@ -108,15 +145,15 @@ function printHTMLHeader() {
 */
 function printEntries() {
 	console.log("printEntries() - Start");
-	console.log("Number of entries: ", entries.length);
+	console.log("Number of entries: ", entryKeys.length);
 	let count = 0;
 	let tagClass = {};
 	for (tag in uniqueTags) {
 		count++;
 		tagClass[tag] = `tag${count}`;
 	}
-	for (let i = 0; i < entries.length; i++) {
-		let entry = entries[i];
+	for (let i = 0; i < entryKeys.length; i++) {
+		let entry = entries[entryKeys[i]];
 		let sectionText = "<div class='entry'>\n";
 		for (let j = 0; j < entry.tags.length; j++) {
 			let currentTag = entry.tags[j];
