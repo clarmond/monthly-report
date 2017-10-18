@@ -33,25 +33,27 @@ let db2 = new sqlite3.Database(databaseLocation, (err) => {
 });
 
 // Get entries for current month
-let entries = [];
+let entries = {};
 let uniqueTags = {};
 
-let cnt = 0;
 let sql = `
 	select
-		z_pk as pk,
-		ztext as text,
-		strftime('%w', date(datetime(zcreationdate, 'unixepoch', 'localtime'), '+31 year')) as day_of_week,
-		strftime('%d', date(datetime(zcreationdate, 'unixepoch', 'localtime'), '+31 year')) as day_of_month,
-		strftime('%H:%M', datetime(zcreationdate, 'unixepoch', 'localtime')) as local_time
+		e.z_pk as pk,
+		e.ztext as text,
+		strftime('%w', date(datetime(e.zcreationdate, 'unixepoch', 'localtime'), '+31 year')) as day_of_week,
+		strftime('%d', date(datetime(e.zcreationdate, 'unixepoch', 'localtime'), '+31 year')) as day_of_month,
+		strftime('%H:%M', datetime(e.zcreationdate, 'unixepoch', 'localtime')) as local_time,
+		tn.zname AS tag
 	from
-		zentry
+		zentry e,
+		z_6tags te,
+		ztag tn
 	where
 		zgregorianyear = ?
 	and
 		zgregorianmonth = ?
 	and
-		z_pk in (
+		e.z_pk in (
 			select
 				z_6entries AS z_pk
 			from
@@ -60,53 +62,28 @@ let sql = `
 				z_30tags1 = ?
 		)
 	order by
-		zcreationdate
+		zcreationdate, tag
 `;
-let dbConn = db.each(sql, [currentYear, currentMonth, workTag], (err, row) => {
-	let entry = {};
-	entry.pk = row.pk;
+console.log(sql);
+db.each(sql, [currentYear, currentMonth, workTag], (err, row) => {
 	if (err) {
 		console.error(err.message);
-		reject();
+		process.exit();
 	}
-	entry.text = row.text.replace("<code type=", "<code class=");
-	entry.text = entry.text.replace(/\`([^\`]+)?\`/g, "<code class='solo'>$1</code>");
+	let pk = row.pk;
+	entries.pk.text = row.text.replace("<code type=", "<code class=");
+	entries.pk.text = entries.pk.text.replace(/\`([^\`]+)?\`/g, "<code class='solo'>$1</code>");
 	let dayOfMonth = row.day_of_month.toString();
-	entry.timeStamp = dayName[row.day_of_week] + ", " + currentMonthName + " " + dayOfMonth.replace(/^0/, "") + " " + row.local_time;
-	let tags = [];
-	let tagSQL = `
-		select
-			zname as tag
-		from
-			z_6tags te,
-			ztag tn
-		where
-			te.z_30tags1 = tn.z_pk
-		and
-			te.z_6entries = ?
-		order by
-			zname
-	`;
-	dbConn.each(tagSQL, [entry.pk], (err, row) => {
-		if (err) {
-			console.log("**ERROR**", err);
-			process.exit();
-		}
-		uniqueTags[row.tag] = row.tag;
-		tags.push(row.tag);
+	entries.pk.timeStamp = dayName[row.day_of_week] + ", " + currentMonthName + " " + dayOfMonth.replace(/^0/, "") + " " + row.local_time;
+	entries.pk.tags[tag] = tag;
 	}, (err, rowsRetrieved) => {
 		if (err) {
-			console.log("ERROR", err);
+			console.error(err.message);
 			process.exit();
 		}
-		cnt++;
-		console.log("Tags retrieved for entry " + cnt.toString(), rowsRetrieved);
-		entry.tags = tags;
-		entries.push(entry);
-	});
-}, (err, rowsRetrieved) => {
-	console.log("Entries retrieved", rowsRetrieved);
-});
+		console.log("Entries retrieved", rowsRetrieved);
+	}
+);
 
 //db.close((err) => {
 //	console.log("db closed");
