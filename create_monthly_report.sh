@@ -1,5 +1,4 @@
 #!/bin/bash
-
-node create_monthly_report.js
-
-open /Users/carmond/monthly-report-test.html
+cd /Users/carmond/journal
+output=$(node create_monthly_report.js $1)
+open "$output" 
