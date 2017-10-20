@@ -1,9 +1,10 @@
 // Intialization
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
+const zpad = require('zpad');
 
 const databaseLocation = "/Users/carmond/Library/Group Containers/5U8NS4GX82.dayoneapp2/Data/Documents/DayOne.sqlite";
-const outputFile = "/Users/carmond/monthly-report-test.html";
+const outputDir = "/Users/carmond/monthly_reports";
 const workTag = 11;
 
 // Define day and month names
@@ -33,29 +34,20 @@ if (!(process.argv[2] === undefined)) {
 		currentYear--;
 	}
 }
-console.log("Month: ", currentMonth);
-console.log("Year: ", currentYear);
+
+let outputFile = outputDir + "/" + currentYear.toString() + zpad(currentMonth, 2).toString() + ".html";
 
 // Connect to database
 let db = new sqlite3.Database(databaseLocation, (err) => {
 	if (err) {
 		console.error(err.message);
 	}
-	//console.log('Connected to database');
-});
-
-let db2 = new sqlite3.Database(databaseLocation, (err) => {
-	if (err) {
-		console.error(err.message);
-	}
-	//console.log('Connected to database');
 });
 
 // Get entries for current month
 let entries = {};
 let entryKeys = [];
 let uniqueTags = {};
-
 let sql = `
 	select
 		e.z_pk as pk,
@@ -121,10 +113,9 @@ db.each(sql, [currentYear, currentMonth, workTag], (err, row) => {
 			console.error(err.message);
 			process.exit();
 		}
-		console.log("Total rows retrieved", rowsRetrieved);
-		//console.log(entries);
 		printHTMLHeader();
 		printEntries();
+		console.log(outputFile)
 	}
 );
 
@@ -132,11 +123,13 @@ db.each(sql, [currentYear, currentMonth, workTag], (err, row) => {
  * Print HTML header
 */
 function printHTMLHeader() {
-	console.log("printHTMLHeader() - Start");
 	let fileContent = fs.readFileSync('header-template.html');
 	let htmlHeader = eval(fileContent.toString());
-	fs.writeFile(outputFile, htmlHeader);
-	console.log("printHTMLHeader() - Exit");
+	fs.writeFile(outputFile, htmlHeader, (err) => {
+		if (err) {
+			console.error(err.message);
+		}
+	});
 	return true;
 }
 
@@ -144,8 +137,6 @@ function printHTMLHeader() {
  * Print entries
 */
 function printEntries() {
-	console.log("printEntries() - Start");
-	console.log("Number of entries: ", entryKeys.length);
 	let count = 0;
 	let tagClass = {};
 	for (tag in uniqueTags) {
@@ -170,5 +161,4 @@ function printEntries() {
 			}
 		});
 	}
-	console.log("printEntries() - Exit");
 }
