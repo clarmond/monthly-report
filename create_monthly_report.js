@@ -6,7 +6,7 @@ const zpad = require('zpad');
 
 const databaseLocation = "/Users/carmond/Library/Group Containers/5U8NS4GX82.dayoneapp2/Data/Documents/DayOne.sqlite";
 const outputDir = "/Users/carmond/monthly_reports";
-const workTag = 11;
+const workJournal = 4;
 
 // Define day and month names
 // TODO:Change to use date-and-time module: https://www.npmjs.com/package/date-and-time
@@ -66,14 +66,7 @@ let sql = `
 	and
 		zgregorianmonth = ?
 	and
-		e.z_pk in (
-			select
-				z_6entries AS z_pk
-			from
-				z_6tags
-			where
-				z_30tags1 = ?
-		)
+		e.zjournal = ?
 	and
 		e.z_pk = te.z_6entries
 	and
@@ -81,7 +74,7 @@ let sql = `
 	order by
 		zcreationdate, tag
 `;
-db.each(sql, [currentYear, currentMonth, workTag], (err, row) => {
+db.each(sql, [currentYear, currentMonth, workJournal], (err, row) => {
 	if (err) {
 		console.error(err.message);
 		process.exit();
