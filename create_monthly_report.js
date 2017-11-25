@@ -1,9 +1,9 @@
-
 // Intialization
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 const zpad = require('zpad');
 
+// Read config file
 var config = require("./config.json");
 
 // Define day and month names
@@ -34,6 +34,7 @@ if (!(process.argv[2] === undefined)) {
 	}
 }
 
+// Define output file
 let outputFile = config.outputDir + "/" + currentYear.toString() + zpad(currentMonth, 2).toString() + ".html";
 
 // Connect to database
@@ -43,10 +44,17 @@ let db = new sqlite3.Database(config.databaseLocation, (err) => {
 	}
 });
 
-// Get entries for current month
+// entries is an object of all entries to display
 let entries = {};
+
+// entryKeys is an array of unique keys for the entries object
 let entryKeys = [];
+
+// uniqueTags is an object of all unique tags found in the entries
 let uniqueTags = {};
+
+// Build SQL to query database for the entries for the given month
+// Note: I'm not sure why but I have to add 31 years for the time to come out right
 let sql = `
 	select
 		e.z_pk as pk,
@@ -84,6 +92,7 @@ db.each(sql, [currentYear, currentMonth, config.workJournal], (err, row) => {
 	if (entries[pk] == undefined) {
 		entries[pk] = {};
 	}
+	// Create entries, formatting the text along the way.
 	entries[pk].text = row.text;
 	entries[pk].text = entries[pk].text.replace(/\`</g, "`&lt;");
 	entries[pk].text = entries[pk].text.replace(/>\`/g, "&gt;`");
