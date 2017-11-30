@@ -98,6 +98,9 @@ db.each(sql, [currentYear, currentMonth, config.workJournal], (err, row) => {
 	entries[pk].text = entries[pk].text.replace(/>\`/g, "&gt;`");
 	entries[pk].text = entries[pk].text.replace("<code type=", "<code class=");
 	entries[pk].text = entries[pk].text.replace(/\`([^\`]+)?\`/g, "<code class='solo'>$1</code>");
+	entries[pk].text = entries[pk].text.replace(/\*\*(.+)\*\*/g, "<strong>$1</strong>");
+	entries[pk].text = entries[pk].text.replace(/^\- /mg, "&bullet; ");
+	entries[pk].text = entries[pk].text.replace(/^(\s+)\- /mg, "$1&bullet; ");
 	let dayOfMonth = row.day_of_month.toString();
 	entries[pk].timeStamp = dayName[row.day_of_week] + ", " + currentMonthName + " " + dayOfMonth.replace(/^0/, "") + " " + row.local_time;
 	if (entries[pk].tags === undefined) {
