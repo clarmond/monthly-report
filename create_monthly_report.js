@@ -65,7 +65,7 @@ let sql = `
 		tn.zname AS tag
 	from
 		zentry e,
-		z_6tags te,
+		z_7tags te,
 		ztag tn
 	where
 		zgregorianyear = ?
@@ -74,7 +74,7 @@ let sql = `
 	and
 		e.zjournal = ?
 	and
-		e.z_pk = te.z_6entries
+		e.z_pk = te.z_7entries
 	and
 		te.z_30tags1 = tn.z_pk
 	order by
