@@ -94,10 +94,14 @@ db.each(sql, [currentYear, currentMonth, config.workJournal], (err, row) => {
 	}
 	// Create entries, formatting the text along the way.
 	entries[pk].text = row.text;
+	// Format markdown
+	entries[pk].text = entries[pk].text.replace(/^# (.+)/mg, "<h3>$1</h3>");
+	entries[pk].text = entries[pk].text.replace(/^## (.+)/mg, "<h4>$1</h4>");
 	entries[pk].text = entries[pk].text.replace(/\`</g, "&lt;");
 	entries[pk].text = entries[pk].text.replace(/>\`/g, "&gt;`");
-	entries[pk].text = entries[pk].text.replace("<code type=", "<code class=");
-	entries[pk].text = entries[pk].text.replace(/\`([^\`]+)?\`/g, "<code class='solo'>$1</code>");
+	entries[pk].text = entries[pk].text.replace(/\`([^`\n]+)\`/g, "<code class='solo'>$1</code>");
+	entries[pk].text = entries[pk].text.replace(/\```([^`]+)\```/g, "<code class='solo'>$1</code>");
+	entries[pk].text = entries[pk].text.replace(/<code class='solo'>\n/, "<code class='solo'>");
 	entries[pk].text = entries[pk].text.replace(/\*\*(.+)\*\*/g, "<strong>$1</strong>");
 	entries[pk].text = entries[pk].text.replace(/^\- /mg, "&bullet; ");
 	entries[pk].text = entries[pk].text.replace(/^(\s+)\- /mg, "$1&bullet; ");
