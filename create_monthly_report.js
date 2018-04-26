@@ -94,7 +94,7 @@ db.each(sql, [currentYear, currentMonth, config.workJournal], (err, row) => {
 	}
 	// Create entries, formatting the text along the way.
 	entries[pk].text = row.text;
-	entries[pk].text = entries[pk].text.replace(/\`</g, "`&lt;");
+	entries[pk].text = entries[pk].text.replace(/\`</g, "&lt;");
 	entries[pk].text = entries[pk].text.replace(/>\`/g, "&gt;`");
 	entries[pk].text = entries[pk].text.replace("<code type=", "<code class=");
 	entries[pk].text = entries[pk].text.replace(/\`([^\`]+)?\`/g, "<code class='solo'>$1</code>");
