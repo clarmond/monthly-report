@@ -15,7 +15,6 @@ const monthName = ["January", "February", "March", "April", "May", "June", "July
 let d = new Date();
 let currentMonth = d.getMonth() + 1;
 let currentYear = d.getFullYear();
-let currentMonthName = monthName[currentMonth - 1];
 if (!(process.argv[2] === undefined)) {
 	let offset = process.argv[2];
 	if (isNaN(offset)) {
@@ -33,6 +32,7 @@ if (!(process.argv[2] === undefined)) {
 		currentYear--;
 	}
 }
+let currentMonthName = monthName[currentMonth - 1];
 
 // Define output file
 let outputFile = config.outputDir + "/" + currentYear.toString() + zpad(currentMonth, 2).toString() + ".html";
@@ -97,6 +97,7 @@ db.each(sql, [currentYear, currentMonth, config.workJournal], (err, row) => {
 	// Format markdown
 	entries[pk].text = entries[pk].text.replace(/^# (.+)/mg, "<h3>$1</h3>");
 	entries[pk].text = entries[pk].text.replace(/^## (.+)/mg, "<h4>$1</h4>");
+	entries[pk].text = entries[pk].text.replace(/^### (.+)/mg, "<h5>$1</h5>");
 	entries[pk].text = entries[pk].text.replace(/\`</g, "&lt;");
 	entries[pk].text = entries[pk].text.replace(/>\`/g, "&gt;`");
 	entries[pk].text = entries[pk].text.replace(/\`([^`\n]+)\`/g, "<code class='solo'>$1</code>");
