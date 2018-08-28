@@ -65,7 +65,7 @@ let sql = `
 		tn.zname AS tag
 	from
 		zentry e,
-		z_7tags te,
+		z_6tags te,
 		ztag tn
 	where
 		zgregorianyear = ?
@@ -74,9 +74,9 @@ let sql = `
 	and
 		e.zjournal = ?
 	and
-		e.z_pk = te.z_7entries
+		e.z_pk = te.z_6entries
 	and
-		te.z_30tags1 = tn.z_pk
+		te.z_25tags1 = tn.z_pk
 	order by
 		zcreationdate, tag
 `;
@@ -98,7 +98,7 @@ db.each(sql, [currentYear, currentMonth, config.workJournal], (err, row) => {
 	entries[pk].text = entries[pk].text.replace(/^# (.+)/mg, "<h3>$1</h3>");
 	entries[pk].text = entries[pk].text.replace(/^## (.+)/mg, "<h4>$1</h4>");
 	entries[pk].text = entries[pk].text.replace(/^### (.+)/mg, "<h5>$1</h5>");
-	entries[pk].text = entries[pk].text.replace(/\`</g, "&lt;");
+	entries[pk].text = entries[pk].text.replace(/\`</g, "`&lt;");
 	entries[pk].text = entries[pk].text.replace(/>\`/g, "&gt;`");
 	entries[pk].text = entries[pk].text.replace(/\`([^`\n]+)\`/g, "<code class='solo'>$1</code>");
 	entries[pk].text = entries[pk].text.replace(/\```([^`]+)\```/g, "<code class='solo'>$1</code>");
